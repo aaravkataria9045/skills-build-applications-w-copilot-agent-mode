@@ -1,12 +1,23 @@
 import { useEffect, useState } from 'react'
-import { fetchCollection } from '../api.js'
+import { normalizeCollection } from '../api.js'
+
+const codespaceName = import.meta.env.VITE_CODESPACE_NAME?.trim()
+const leaderboardApiUrl = codespaceName && codespaceName !== 'undefined'
+  ? `https://${codespaceName}-8000.app.github.dev/api/leaderboard/`
+  : 'http://localhost:8000/api/leaderboard/'
 
 function Leaderboard() {
   const [entries, setEntries] = useState([])
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchCollection('leaderboard').then(setEntries).catch((loadError) => setError(loadError.message))
+    fetch(leaderboardApiUrl)
+      .then((response) => {
+        if (!response.ok) throw new Error('Unable to load leaderboard.')
+        return response.json()
+      })
+      .then((payload) => setEntries(normalizeCollection(payload)))
+      .catch((loadError) => setError(loadError.message))
   }, [])
 
   return (
